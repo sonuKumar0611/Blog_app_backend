@@ -2,9 +2,14 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 import db
 import os
 import shutil
-from schemas import UserCreate, UserUpdate, BlogCreate, BlogUpdate
+from schemas import UserCreate, UserUpdate, UserLogin, SignupModel
 from fastapi.staticfiles import StaticFiles
+from helper import (verify_password, create_access_token)
+from datetime import timedelta
 
+SECRET_KEY = "abc" 
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
 
@@ -100,6 +105,31 @@ async def delete_blog(blog_id: int):
     return {"message": "Blog deleted successfully"}
 
 
+# Auth Api's
+@app.post("/login")
+async def login(user: UserLogin):
+    db_user = db.get_user_by_username(user.username)
+    
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+    
+    db_username, db_hashed_password, db_hashed_user_type = db_user
+    
+    if not verify_password(user.password, db_hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(data={"username": db_username,"usertype":db_hashed_user_type}, expires_delta=access_token_expires)
+    return {"token": access_token}
+
+
+@app.post("/signup")
+async def signup(user: SignupModel):
+    if db.get_user_by_username(user.username):
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    db.create_user_in_db(user.username, user.password,user.user_type)
+    return {"message": "User created successfully"}
 
 
 

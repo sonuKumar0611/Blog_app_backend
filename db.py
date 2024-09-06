@@ -105,3 +105,14 @@ def delete_blog_from_db(blog_id: int):
     connection.commit()
     cursor.close()
     connection.close()
+
+def get_user_by_username(username: str):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT username, password, user_type FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return user
+
+   

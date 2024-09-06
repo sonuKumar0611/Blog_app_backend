@@ -21,3 +21,11 @@ class BlogUpdate(BaseModel):
     visibility: str
     file_path: str
 
+class UserLogin(BaseModel):
+    username:str
+    password:str
+
+class SignupModel(BaseModel):
+    username: str
+    password: str
+    user_type: str
